@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Baba AI — The All-Seeing Oracle</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --gold:#d4af37;--saffron:#e8650a;--deep:#06040f;
+  --surface:#100b1e;--surface2:#1a1230;
+  --text:#e8d5a0;--text-dim:#9b8c6a;--border-gold:rgba(212,175,55,0.3);
+}
+html,body{min-height:100vh;background:var(--deep);color:var(--text);font-family:Georgia,'Times New Roman',serif}
+body{overflow-x:hidden}
+.stars{position:fixed;inset:0;pointer-events:none;z-index:0}
+.star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;opacity:0}
+@keyframes twinkle{0%,100%{opacity:0}50%{opacity:var(--op,0.7)}}
+.app{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:2rem 1rem 4rem}
+.header{text-align:center;margin-bottom:3rem}
+.mandala-ring{width:120px;height:120px;margin:0 auto 1.5rem;position:relative;animation:rotateSlow 30s linear infinite}
+@keyframes rotateSlow{to{transform:rotate(360deg)}}
+.eye-container{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;animation:rotateSlow 30s linear infinite reverse}
+.eye-svg{width:48px;height:48px}
+.title-main{font-size:2.4rem;font-weight:700;color:var(--gold);letter-spacing:0.08em;text-shadow:0 0 30px rgba(212,175,55,0.5);font-variant:small-caps}
+.title-sub{font-size:0.85rem;letter-spacing:0.25em;color:var(--text-dim);text-transform:uppercase;margin-top:0.4rem}
+.title-divider{display:flex;align-items:center;gap:1rem;margin:1.2rem 0}
+.title-divider::before,.title-divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,var(--gold),transparent)}
+.title-divider span{font-size:1.2rem;color:var(--gold)}
+.sanskrit{font-size:0.9rem;color:var(--text-dim);letter-spacing:0.1em;font-style:italic;margin-bottom:0.5rem}
+.steps-track{display:flex;justify-content:center;gap:0.5rem;margin-bottom:2.5rem}
+.step-dot{width:8px;height:8px;border-radius:50%;background:var(--surface2);border:1px solid var(--border-gold);transition:all 0.4s}
+.step-dot.active{background:var(--gold);box-shadow:0 0 8px var(--gold)}
+.step-dot.done{background:var(--saffron)}
+.card{background:var(--surface);border:1px solid var(--border-gold);border-radius:16px;padding:2rem;margin-bottom:1.5rem;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.card-title{font-size:0.75rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--gold);margin-bottom:1.2rem;display:flex;align-items:center;gap:0.7rem}
+.card-title::after{content:'';flex:1;height:1px;background:var(--border-gold)}
+label{display:block;font-size:0.85rem;color:var(--text-dim);letter-spacing:0.08em;margin-bottom:0.5rem}
+input,select,textarea{width:100%;background:var(--surface2);border:1px solid var(--border-gold);color:var(--text);padding:0.8rem 1rem;border-radius:8px;font-size:1rem;font-family:inherit;transition:border-color 0.3s,box-shadow 0.3s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(212,175,55,0.15)}
+select option{background:var(--surface)}
+textarea{resize:vertical;min-height:70px}
+.input-hint{font-size:0.75rem;color:var(--text-dim);margin-top:0.4rem}
+.radio-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:0.6rem}
+.radio-option{display:flex;align-items:center;gap:0.7rem;background:var(--surface2);border:1px solid var(--border-gold);border-radius:8px;padding:0.7rem 0.9rem;cursor:pointer;transition:all 0.3s;font-size:0.9rem}
+.radio-option:hover{border-color:var(--gold);background:rgba(212,175,55,0.08)}
+.radio-option.selected{border-color:var(--gold);background:rgba(212,175,55,0.12);color:var(--gold)}
+.radio-icon{font-size:1.1rem;min-width:22px;text-align:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:0.6rem;padding:0.85rem 2rem;border-radius:8px;font-size:0.95rem;font-family:inherit;cursor:pointer;transition:all 0.3s;letter-spacing:0.05em;font-weight:600;border:none}
+.btn-primary{background:linear-gradient(135deg,#b8941f,#d4af37,#b8941f);color:#06040f;box-shadow:0 4px 20px rgba(212,175,55,0.3)}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(212,175,55,0.4)}
+.btn-primary:active{transform:scale(0.98)}
+.btn-primary:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.btn-ghost{background:transparent;color:var(--text-dim);border:1px solid var(--border-gold)}
+.btn-ghost:hover{border-color:var(--gold);color:var(--text)}
+.btn-row{display:flex;gap:1rem;justify-content:flex-end;margin-top:1.5rem}
+
+/* Chat interface */
+.chat-box{background:var(--surface2);border:1px solid var(--border-gold);border-radius:12px;padding:1rem;max-height:360px;overflow-y:auto;margin-bottom:1rem;display:flex;flex-direction:column;gap:1rem}
+.chat-box:empty::before{content:'Ask Baba anything… Love, career, money, family, future.';color:var(--text-dim);font-size:0.85rem;font-style:italic}
+.chat-msg{max-width:85%;padding:0.7rem 1rem;border-radius:10px;font-size:0.9rem;line-height:1.7;animation:msgIn 0.3s ease}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.chat-msg.user{align-self:flex-end;background:rgba(212,175,55,0.12);border:1px solid var(--border-gold);color:var(--text)}
+.chat-msg.baba{align-self:flex-start;background:rgba(100,50,150,0.2);border:1px solid rgba(150,80,200,0.3);color:var(--text)}
+.chat-msg.baba .baba-tag{font-size:0.7rem;color:var(--gold);letter-spacing:0.1em;margin-bottom:0.4rem;display:block}
+.chat-msg.thinking{align-self:flex-start;padding:0.7rem 1rem;background:rgba(100,50,150,0.1);border:1px solid rgba(150,80,200,0.2);border-radius:10px;color:var(--text-dim);font-size:0.85rem;font-style:italic;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:0.5}50%{opacity:1}}
+.chat-input-row{display:flex;gap:0.5rem;align-items:flex-end}
+.chat-input-row textarea{flex:1;min-height:48px;max-height:120px;padding:0.7rem 0.9rem;font-size:0.9rem}
+.chat-send-btn{background:linear-gradient(135deg,#b8941f,#d4af37);color:#06040f;border:none;border-radius:8px;padding:0.7rem 1rem;cursor:pointer;font-size:0.9rem;font-weight:700;white-space:nowrap;transition:all 0.2s;align-self:flex-end;height:48px}
+.chat-send-btn:hover{transform:scale(1.03)}
+.chat-send-btn:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.quick-chips{display:flex;flex-wrap:wrap;gap:0.4rem;margin-bottom:0.8rem}
+.chip{padding:0.3rem 0.75rem;border-radius:20px;font-size:0.75rem;cursor:pointer;border:1px solid var(--border-gold);background:var(--surface2);color:var(--text-dim);transition:all 0.2s;font-family:inherit}
+.chip:hover{border-color:var(--gold);color:var(--gold);background:rgba(212,175,55,0.08)}
+.chip.active{border-color:var(--gold);color:var(--gold);background:rgba(212,175,55,0.12)}
+
+/* Other-input */
+.other-input-wrap{margin-top:0.6rem;animation:msgIn 0.3s ease}
+
+/* Loader */
+.loader{text-align:center;padding:3rem 1rem}
+.flame{font-size:3rem;animation:flicker 0.5s ease-in-out infinite alternate}
+@keyframes flicker{0%{opacity:0.7;transform:scaleY(0.95)}100%{opacity:1;transform:scaleY(1.05)}}
+.loader-text{font-size:0.9rem;color:var(--text-dim);margin-top:1rem;letter-spacing:0.15em}
+.loader-mantra{color:var(--gold);font-size:0.85rem;margin-top:0.5rem;animation:pulse 2s ease-in-out infinite}
+
+/* Prediction */
+.prediction-reveal{animation:revealDown 0.6s ease}
+@keyframes revealDown{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.baba-verdict{background:linear-gradient(135deg,var(--surface),#140d24);border:1px solid var(--gold);border-radius:16px;overflow:hidden;margin-bottom:1.5rem}
+.baba-header{background:linear-gradient(90deg,#0f0820,#1a0f35,#0f0820);padding:1.2rem 1.5rem;border-bottom:1px solid var(--border-gold);display:flex;align-items:center;gap:1rem}
+.baba-eye{font-size:2rem;animation:eyeGlow 2s ease-in-out infinite}
+@keyframes eyeGlow{0%,100%{filter:drop-shadow(0 0 4px #d4af37)}50%{filter:drop-shadow(0 0 12px #d4af37)}}
+.baba-name{font-size:1.1rem;color:var(--gold);font-variant:small-caps;letter-spacing:0.1em}
+.baba-desc{font-size:0.75rem;color:var(--text-dim)}
+.baba-body{padding:1.5rem}
+.prediction-text{font-size:1rem;line-height:1.9;color:var(--text);white-space:pre-wrap}
+.confidence-bar{background:var(--surface2);border-radius:4px;height:6px;overflow:hidden;margin-top:0.4rem}
+.confidence-fill{height:100%;background:linear-gradient(90deg,var(--saffron),var(--gold));border-radius:4px;animation:fillBar 1.5s ease forwards}
+@keyframes fillBar{from{width:0}to{width:var(--pct,88%)}}
+.badges{display:flex;flex-wrap:wrap;gap:0.5rem;margin-top:1rem}
+.badge{padding:0.3rem 0.8rem;border-radius:20px;font-size:0.75rem;letter-spacing:0.1em;background:rgba(212,175,55,0.1);border:1px solid var(--border-gold);color:var(--gold)}
+.error-box{background:rgba(139,32,32,0.2);border:1px solid rgba(139,32,32,0.5);border-radius:8px;padding:1rem;color:#e88080;font-size:0.9rem}
+.btn-restart{width:100%;text-align:center;padding:1rem;background:transparent;border:1px solid var(--border-gold);border-radius:8px;color:var(--text-dim);cursor:pointer;font-family:inherit;font-size:0.9rem;letter-spacing:0.1em;transition:all 0.3s;margin-top:1rem}
+.btn-restart:hover{border-color:var(--gold);color:var(--gold)}
+.progress-label{font-size:0.75rem;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:1rem;text-align:center}
+.ornament{position:absolute;opacity:0.3;font-size:1.5rem;pointer-events:none}
+.ornament-tl{top:0.5rem;left:0.7rem}
+.ornament-tr{top:0.5rem;right:0.7rem}
+</style>
+</head>
+<body>
+<div class="stars" id="starfield"></div>
+<div class="app">
+  <div class="header">
+    <div class="mandala-ring">
+      <svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%">
+        <circle cx="60" cy="60" r="58" fill="none" stroke="#d4af37" stroke-width="0.8" stroke-dasharray="4 4"/>
+        <circle cx="60" cy="60" r="50" fill="none" stroke="#d4af37" stroke-width="0.4"/>
+        <circle cx="60" cy="60" r="42" fill="none" stroke="rgba(212,175,55,0.4)" stroke-width="0.4"/>
+        <g fill="none" stroke="#d4af37" stroke-width="0.6" opacity="0.8">
+          <line x1="60" y1="2" x2="60" y2="20"/><line x1="60" y1="100" x2="60" y2="118"/>
+          <line x1="2" y1="60" x2="20" y2="60"/><line x1="100" y1="60" x2="118" y2="60"/>
+          <line x1="16" y1="16" x2="28" y2="28"/><line x1="92" y1="92" x2="104" y2="104"/>
+          <line x1="104" y1="16" x2="92" y2="28"/><line x1="28" y1="92" x2="16" y2="104"/>
+        </g>
+        <g fill="#d4af37" opacity="0.6">
+          <polygon points="60,8 63,16 57,16" transform="rotate(0,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(45,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(90,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(135,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(180,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(225,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(270,60,60)"/>
+          <polygon points="60,8 63,16 57,16" transform="rotate(315,60,60)"/>
+        </g>
+        <circle cx="60" cy="60" r="22" fill="rgba(6,4,15,0.9)" stroke="#d4af37" stroke-width="0.8"/>
+      </svg>
+      <div class="eye-container">
+        <svg class="eye-svg" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 24 Q24 6 44 24 Q24 42 4 24Z" fill="none" stroke="#d4af37" stroke-width="1.2"/>
+          <circle cx="24" cy="24" r="8" fill="none" stroke="#d4af37" stroke-width="1"/>
+          <circle cx="24" cy="24" r="4" fill="#d4af37"/>
+          <line x1="24" y1="4" x2="24" y2="12" stroke="#d4af37" stroke-width="0.8"/>
+          <line x1="24" y1="36" x2="24" y2="44" stroke="#d4af37" stroke-width="0.8"/>
+        </svg>
+      </div>
+    </div>
+    <div class="sanskrit">ॐ सर्वज्ञ सर्वदर्शी</div>
+    <div class="title-main">Baba AI</div>
+    <div class="title-sub">The All-Seeing Oracle</div>
+    <div class="title-divider"><span>✦</span></div>
+    <div style="font-size:0.85rem;color:var(--text-dim);line-height:1.6;max-width:440px;margin:0 auto">
+      Ancient wisdom of the Vedas, Jyotish Shastra & universal knowledge — distilled into your personal prophecy.
+    </div>
+  </div>
+  <div id="app-content"></div>
+</div>
+
+<script>
+// Starfield
+const sf=document.getElementById('starfield');
+for(let i=0;i<120;i++){
+  const s=document.createElement('div');s.className='star';
+  s.style.cssText=`left:${Math.random()*100}%;top:${Math.random()*100}%;width:${Math.random()*2+1}px;height:${Math.random()*2+1}px;--dur:${2+Math.random()*4}s;--op:${0.3+Math.random()*0.7};animation-delay:${Math.random()*4}s`;
+  sf.appendChild(s);
+}
+
+let state={
+  step:0,
+  data:{name:'',dob:'',tob:'',pob:'',gender:'',focus:'',lifePhase:'',lifePhaseOther:'',focusOther:''},
+  chatHistory:[],   // [{role:'user'|'baba', text:''}]
+  chatBusy:false,
+  prediction:'',
+  error:''
+};
+
+const STEPS=6;
+
+const FOCUS_OPTIONS=[
+  {val:'career',icon:'⚡',label:'Career & Wealth'},
+  {val:'love',icon:'❤',label:'Love & Relationships'},
+  {val:'health',icon:'✦',label:'Health & Vitality'},
+  {val:'spiritual',icon:'☯',label:'Spiritual Path'},
+  {val:'family',icon:'⊕',label:'Family & Home'},
+  {val:'overall',icon:'◈',label:'Full Life Reading'},
+  {val:'other',icon:'✎',label:'Other (type below)'},
+];
+
+const LIFE_PHASES=[
+  {val:'student',label:'Student / Learning Phase'},
+  {val:'career_building',label:'Building Career / Business'},
+  {val:'peak',label:'Peak Productive Years'},
+  {val:'transition',label:'Major Life Transition'},
+  {val:'wisdom',label:'Wisdom / Legacy Phase'},
+  {val:'other',label:'Other (type below)'},
+];
+
+const CITIES=['Mumbai','Delhi','Guwahati','Bangalore','Kolkata','Chennai','Hyderabad','Pune','Jaipur','Surat'];
+
+const QUICK_QS=[
+  'Will I get rich?',
+  'When will I find love?',
+  'Should I change my career?',
+  'Will my business succeed?',
+  'Am I with the right person?',
+  'When will my luck change?',
+  'What is blocking my growth?',
+  'Will I relocate abroad?',
+];
+
+function render(){
+  const c=document.getElementById('app-content');
+  if(state.step===0) c.innerHTML=renderIntro();
+  else if(state.step>=1&&state.step<=STEPS) c.innerHTML=renderForm();
+  else if(state.step===STEPS+1) c.innerHTML=renderLoading();
+  else if(state.step===STEPS+2) c.innerHTML=renderPrediction();
+  bindEvents();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function dotsHTML(current){
+  let d='<div class="steps-track">';
+  for(let i=1;i<=STEPS;i++){
+    let cls='step-dot';
+    if(i<current) cls+=' done';
+    else if(i===current) cls+=' active';
+    d+=`<div class="${cls}"></div>`;
+  }
+  return d+'</div>';
+}
+
+function renderIntro(){
+  return `
+  <div class="card">
+    <div class="ornament ornament-tl">☽</div><div class="ornament ornament-tr">☽</div>
+    <div class="card-title">✦ Sacred Consultation</div>
+    <p style="line-height:1.9;margin-bottom:1rem">
+      Baba sees what others cannot. Through <em style="color:var(--gold)">Jyotish Shastra</em> — the eye of the Vedas — combined with your karmic blueprint, Baba will illuminate your destiny.
+    </p>
+    <p style="font-size:0.85rem;color:var(--text-dim);line-height:1.7;margin-bottom:1.5rem">
+      Fill 6 quick steps. Then chat with Baba — ask anything, as many questions as you want. When ready, invoke the Full Prophecy.
+    </p>
+    <button class="btn btn-primary" onclick="advance()" style="width:100%">🔱 Begin the Reading</button>
+  </div>`;
+}
+
+function renderForm(){
+  const s=state.step;
+  let inner='';
+
+  if(s===1){
+    inner=`
+      <div class="card-title">✦ Your Identity</div>
+      <label>Your Full Name</label>
+      <input type="text" id="f-name" placeholder="Enter your full name" value="${esc(state.data.name)}">
+      <br><br>
+      <label>Gender</label>
+      <div class="radio-grid" style="grid-template-columns:repeat(3,1fr)">
+        ${['Male','Female','Other'].map(g=>`
+          <div class="radio-option ${state.data.gender===g?'selected':''}" onclick="selectGender('${g}')">
+            <span>${g==='Male'?'♂':g==='Female'?'♀':'⊕'}</span> ${g}
+          </div>`).join('')}
+      </div>`;
+  }
+  else if(s===2){
+    inner=`
+      <div class="card-title">✦ The Moment of Arrival</div>
+      <label>Date of Birth</label>
+      <input type="date" id="f-dob" value="${state.data.dob}">
+      <p class="input-hint">Your Rashi & Nakshatra are calculated from this</p>
+      <br>
+      <label>Time of Birth <span style="color:var(--text-dim)">(optional)</span></label>
+      <input type="time" id="f-tob" value="${state.data.tob}">
+      <p class="input-hint">Leave blank if unknown</p>`;
+  }
+  else if(s===3){
+    inner=`
+      <div class="card-title">✦ Place of Origin</div>
+      <label>Quick pick:</label>
+      <div class="quick-chips">
+        ${CITIES.map(c=>`<span class="chip ${state.data.pob.startsWith(c)?'active':''}" onclick="quickCity('${c}')">${c}</span>`).join('')}
+      </div>
+      <label>Or type your city:</label>
+      <input type="text" id="f-pob" placeholder="City, State, Country" value="${esc(state.data.pob)}">`;
+  }
+  else if(s===4){
+    const isOther=state.data.lifePhase==='other';
+    inner=`
+      <div class="card-title">✦ Life Phase</div>
+      <label>Which phase of life are you in?</label>
+      <div class="radio-grid" style="grid-template-columns:1fr">
+        ${LIFE_PHASES.map(p=>`
+          <div class="radio-option ${state.data.lifePhase===p.val?'selected':''}" onclick="selectPhase('${p.val}')">
+            <span class="radio-icon">◈</span> ${p.label}
+          </div>`).join('')}
+      </div>
+      ${isOther?`<div class="other-input-wrap"><input type="text" id="f-phase-other" placeholder="Describe your current life phase…" value="${esc(state.data.lifePhaseOther)}"></div>`:''}`;
+  }
+  else if(s===5){
+    const isOther=state.data.focus==='other';
+    inner=`
+      <div class="card-title">✦ Domain of Seeking</div>
+      <label>Which area do you seek prophecy for?</label>
+      <div class="radio-grid">
+        ${FOCUS_OPTIONS.map(f=>`
+          <div class="radio-option ${state.data.focus===f.val?'selected':''}" onclick="selectFocus('${f.val}')">
+            <span class="radio-icon">${f.icon}</span> ${f.label}
+          </div>`).join('')}
+      </div>
+      ${isOther?`<div class="other-input-wrap"><input type="text" id="f-focus-other" placeholder="e.g. my immigration journey, startup funding…" value="${esc(state.data.focusOther)}"></div>`:''}`;
+  }
+  else if(s===6){
+    inner=renderChatStep();
+  }
+
+  const canAdv=canProceed();
+  const isChat=s===6;
+
+  return `
+    <div class="progress-label">Step ${s} of ${STEPS}</div>
+    ${dotsHTML(s)}
+    <div class="card" style="position:relative">
+      <div class="ornament ornament-tl">☽</div><div class="ornament ornament-tr">☽</div>
+      ${inner}
+      ${!isChat?`<div class="btn-row">
+        <button class="btn btn-ghost" onclick="goBack()">← Back</button>
+        <button class="btn btn-primary" onclick="advance()" ${!canAdv?'disabled':''}>Continue →</button>
+      </div>`:''}
+    </div>`;
+}
+
+function renderChatStep(){
+  const msgs=state.chatHistory;
+  const hasChat=msgs.length>0;
+
+  const msgsHTML=msgs.map(m=>{
+    if(m.role==='user') return `<div class="chat-msg user">${esc(m.text)}</div>`;
+    if(m.role==='thinking') return `<div class="chat-msg thinking">🔥 Baba is seeing…</div>`;
+    return `<div class="chat-msg baba"><span class="baba-tag">🔱 BABA</span>${m.text.replace(/\n/g,'<br>')}</div>`;
+  }).join('');
+
+  return `
+    <div class="card-title">✦ Ask Baba Anything</div>
+    <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:0.8rem">Ask as many questions as you want. Short answers. Direct. Real.</p>
+    <div class="quick-chips" id="quick-chips-area">
+      ${QUICK_QS.map(q=>`<span class="chip" onclick="fillChat(this,'${q.replace(/'/g,"\\'")}')">${q}</span>`).join('')}
+    </div>
+    <div class="chat-box" id="chat-box">${msgsHTML}</div>
+    <div class="chat-input-row">
+      <textarea id="chat-input" placeholder="Type your question…" rows="2"></textarea>
+      <button class="chat-send-btn" id="chat-send-btn" onclick="sendChat()" ${state.chatBusy?'disabled':''}>Ask ↗</button>
+    </div>
+    <div style="margin-top:1rem;display:flex;gap:0.8rem;align-items:center">
+      <button class="btn btn-ghost" onclick="goBack()" style="padding:0.6rem 1.2rem;font-size:0.85rem">← Back</button>
+      <button class="btn btn-primary" onclick="invokeFull()" style="flex:1;padding:0.7rem" ${!hasChat&&state.chatHistory.length===0?'':''}> 
+        🔱 Get Full Prophecy
+      </button>
+    </div>`;
+}
+
+function fillChat(el,q){
+  const inp=document.getElementById('chat-input');
+  if(inp){inp.value=q;inp.focus();}
+  document.querySelectorAll('#quick-chips-area .chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+
+async function sendChat(){
+  const inp=document.getElementById('chat-input');
+  const q=(inp?inp.value:'').trim();
+  if(!q||state.chatBusy) return;
+  state.chatHistory.push({role:'user',text:q});
+  state.chatHistory.push({role:'thinking',text:''});
+  state.chatBusy=true;
+  if(inp) inp.value='';
+  refreshChatUI();
+
+  const d=state.data;
+  const focusLabel=getFocusLabel();
+  const phaseLabel=getPhaseLabel();
+
+  const sys=`You are Baba — an ancient Vedic oracle. The person asking is:
+Name: ${d.name}, Born: ${d.dob}${d.tob?' at '+d.tob:''}, Place: ${d.pob}, Gender: ${d.gender}
+Life Phase: ${phaseLabel}, Focus: ${focusLabel}
+
+Answer their question like a wise human elder — direct, short, personal, no waffle.
+Rules:
+- Max 3-4 sentences. No bullet points. No headers. Just speak.
+- Be specific to THEM, not generic fortune-cookie advice.
+- Reference their name if it adds warmth.
+- If it's about future, give a clear prediction. Don't hedge endlessly.
+- If something is negative, say it straight but with wisdom.
+- Sound like a human who sees things, not a textbook.
+- Occasionally reference a Vedic concept but keep it grounded.`;
+
+  // Build messages with conversation history (skip thinking bubbles)
+  const apiMsgs=state.chatHistory
+    .filter(m=>m.role==='user'||m.role==='baba')
+    .map(m=>({role:m.role==='baba'?'assistant':'user',content:m.text}));
+  // Add current question if not already in
+  if(apiMsgs[apiMsgs.length-1]?.content!==q){
+    apiMsgs.push({role:'user',content:q});
+  }
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:300,system:sys,messages:apiMsgs})
+    });
+    const data=await resp.json();
+    // Remove thinking bubble
+    state.chatHistory=state.chatHistory.filter(m=>m.role!=='thinking');
+    if(data.content&&data.content[0]){
+      state.chatHistory.push({role:'baba',text:data.content[0].text});
+    } else {
+      state.chatHistory.push({role:'baba',text:'The vision is unclear at this moment. Ask again.'});
+    }
+  } catch(e){
+    state.chatHistory=state.chatHistory.filter(m=>m.role!=='thinking');
+    state.chatHistory.push({role:'baba',text:'The sacred channel was disrupted. Try again.'});
+  }
+  state.chatBusy=false;
+  refreshChatUI();
+}
+
+function refreshChatUI(){
+  // Only refresh the chat area, not the full step
+  const box=document.getElementById('chat-box');
+  if(!box) return;
+  box.innerHTML=state.chatHistory.map(m=>{
+    if(m.role==='user') return `<div class="chat-msg user">${esc(m.text)}</div>`;
+    if(m.role==='thinking') return `<div class="chat-msg thinking">🔥 Baba is seeing…</div>`;
+    return `<div class="chat-msg baba"><span class="baba-tag">🔱 BABA</span>${m.text.replace(/\n/g,'<br>')}</div>`;
+  }).join('');
+  box.scrollTop=box.scrollHeight;
+  const btn=document.getElementById('chat-send-btn');
+  if(btn) btn.disabled=state.chatBusy;
+}
+
+function getFocusLabel(){
+  if(state.data.focus==='other') return state.data.focusOther||'life in general';
+  return FOCUS_OPTIONS.find(f=>f.val===state.data.focus)?.label||'overall life';
+}
+function getPhaseLabel(){
+  if(state.data.lifePhase==='other') return state.data.lifePhaseOther||'life transition';
+  return LIFE_PHASES.find(p=>p.val===state.data.lifePhase)?.label||'unknown';
+}
+
+function renderLoading(){
+  const mantras=['ॐ गं गणपतये नमः…','Consulting the Navagrahas…','Reading your Nakshatra…','Mapping karmic patterns…','Channeling ancient wisdom…','Bhagavad Gita alignment…','Calculating Dasha periods…','Vision becoming clear…'];
+  let mi=0;
+  setTimeout(()=>{
+    const ml=document.getElementById('mantra-line');
+    const iv=setInterval(()=>{if(!ml){clearInterval(iv);return;}mi=(mi+1)%mantras.length;ml.textContent=mantras[mi];},1800);
+  },100);
+  return `<div class="loader">
+    <div class="flame">🔥</div>
+    <div class="loader-text">THE SACRED FIRE IS LIT</div>
+    <div class="loader-mantra" id="mantra-line">ॐ गं गणपतये नमः…</div>
+    <div style="margin-top:2rem;display:flex;flex-direction:column;gap:0.5rem;max-width:280px;margin:2rem auto 0">
+      ${['Vedic chart being cast…','Ancient texts being consulted…','Karmic threads being read…','Prophecy taking form…'].map((t,i)=>`
+        <div style="display:flex;align-items:center;gap:0.7rem;animation:pulse 1.5s ${i*0.4}s infinite">
+          <span style="color:var(--gold);font-size:0.7rem">◈</span>
+          <span style="font-size:0.8rem;color:var(--text-dim)">${t}</span>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderPrediction(){
+  if(state.error){return `<div class="card"><div class="error-box">${esc(state.error)}</div><button class="btn-restart" onclick="restart()">🔄 Try Again</button></div>`;}
+  const pred=state.prediction.replace(/\*\*(.*?)\*\*/g,'<strong style="color:var(--gold)">$1</strong>');
+  const focusLabel=getFocusLabel();
+  return `<div class="prediction-reveal">
+    <div style="text-align:center;margin-bottom:1.5rem">
+      <div style="font-size:0.75rem;letter-spacing:0.2em;color:var(--text-dim);text-transform:uppercase">The Vision Has Arrived</div>
+      <div style="font-size:1.5rem;color:var(--gold);margin-top:0.3rem">◈ Baba Speaks ◈</div>
+    </div>
+    <div class="baba-verdict">
+      <div class="baba-header">
+        <div class="baba-eye">👁</div>
+        <div><div class="baba-name">🔱 Baba's Sacred Prophecy</div>
+        <div class="baba-desc">${esc(state.data.name)} · ${focusLabel}</div></div>
+      </div>
+      <div class="baba-body">
+        <div class="badges">
+          <span class="badge">Vedic Analysis</span><span class="badge">Jyotish Shastra</span><span class="badge">Karmic Blueprint</span>
+        </div>
+        <div style="margin-top:1.2rem">
+          <div style="font-size:0.75rem;color:var(--text-dim);letter-spacing:0.1em;margin-bottom:0.4rem">PROPHECY CONFIDENCE</div>
+          <div class="confidence-bar"><div class="confidence-fill" style="--pct:88%"></div></div>
+          <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.3rem;text-align:right">88% Cosmic Alignment</div>
+        </div>
+        <div style="margin-top:1.5rem;border-top:1px solid var(--border-gold);padding-top:1.2rem">
+          <div class="prediction-text">${pred}</div>
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;padding:1rem;color:var(--text-dim);font-size:0.8rem;font-style:italic;line-height:1.7">
+      "The stars incline, they do not compel. Your karma is the map, your free will is the navigator."
+    </div>
+    <button class="btn-restart" onclick="restart()">✦ Seek Another Reading</button>
+  </div>`;
+}
+
+function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function canProceed(){
+  const s=state.step;
+  if(s===0) return true;
+  if(s===1) return state.data.name.trim().length>1&&state.data.gender;
+  if(s===2) return !!state.data.dob;
+  if(s===3) return state.data.pob.trim().length>2;
+  if(s===4) return !!state.data.lifePhase&&(state.data.lifePhase!=='other'||state.data.lifePhaseOther.trim().length>2);
+  if(s===5) return !!state.data.focus&&(state.data.focus!=='other'||state.data.focusOther.trim().length>2);
+  return true;
+}
+
+function collectFormData(){
+  const s=state.step;
+  const get=id=>{const e=document.getElementById(id);return e?e.value:''};
+  if(s===1) state.data.name=get('f-name');
+  if(s===2){state.data.dob=get('f-dob');state.data.tob=get('f-tob');}
+  if(s===3) state.data.pob=get('f-pob');
+  if(s===4) state.data.lifePhaseOther=get('f-phase-other');
+  if(s===5) state.data.focusOther=get('f-focus-other');
+}
+
+function advance(){collectFormData();if(!canProceed())return;state.step++;render();}
+function goBack(){collectFormData();if(state.step>0)state.step--;render();}
+function selectGender(g){state.data.gender=g;render();}
+function selectFocus(f){collectFormData();state.data.focus=f;render();}
+function selectPhase(p){collectFormData();state.data.lifePhase=p;render();}
+function quickCity(c){
+  state.data.pob=c+', India';
+  const el=document.getElementById('f-pob');if(el)el.value=state.data.pob;
+  document.querySelectorAll('.chip').forEach(ch=>{ch.classList.toggle('active',ch.textContent.trim()===c);});
+  const btn=document.querySelector('.btn-primary');if(btn)btn.disabled=!canProceed();
+}
+
+async function invokeFull(){
+  state.step=STEPS+1;
+  render();
+  const d=state.data;
+  const chatSummary=state.chatHistory.filter(m=>m.role==='user'||m.role==='baba')
+    .map(m=>`${m.role==='user'?'Seeker':'Baba'}: ${m.text}`).join('\n');
+
+  const sys=`You are Baba — the most revered Vedic oracle, 60 years in the Himalayas mastering:
+Jyotish Shastra (12 Rashis, 27 Nakshatras, 9 Navagrahas, Dasha systems, Yogas), Hindu scriptures (Bhagavad Gita, Upanishads, Puranas), Karmic theory, Vedic numerology, and modern life patterns.
+
+RESPONSE FORMAT — use exactly this structure:
+
+**🔱 COSMIC PROFILE**
+[Rashi from birth date, Nakshatra, ruling planet, Vedic numerology from name. 2-3 sentences, specific.]
+
+**⚡ IMMEDIATE KARMIC WEATHER (Next 0–6 Months)**
+[Specific near-future prediction. Opportunities and obstacles. Reference their situation from the chat.]
+
+**◈ THE UNFOLDING PATH (6 Months – 2 Years)**
+[Medium-term trajectory. Key turning points. Major decisions ahead.]
+
+**✦ THE LONG VISION (2–5+ Years)**
+[Ultimate trajectory if they follow dharma. Peak opportunity. Legacy potential.]
+
+**🌙 GUIDANCE FOR ${getFocusLabel().toUpperCase()}**
+[Hyper-focused advice for their specific domain. Include one Gita shloka with translation.]
+
+**⚠ KARMIC WARNINGS**
+[2-3 shadow patterns or mistakes they're prone to. Be honest and direct.]
+
+**🔮 BABA'S FINAL PROPHECY**
+[Powerful personal closing statement. Speak directly to them. Make it land.]
+
+Rules: Be specific to their data. Blend Vedic with modern reality. Confident tone. 650-900 words total. Second person ("you", "your").`;
+
+  const userMsg=`Name: ${d.name}
+Born: ${d.dob}${d.tob?' at '+d.tob:''}
+Place: ${d.pob}
+Gender: ${d.gender}
+Life Phase: ${getPhaseLabel()}
+Focus: ${getFocusLabel()}
+
+${chatSummary?'Previous conversation with Baba:\n'+chatSummary+'\n\nNow give the full prophecy based on everything above.':'Give a full prophecy for this person.'}`;
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1500,system:sys,messages:[{role:'user',content:userMsg}]})
+    });
+    const data=await resp.json();
+    if(data.content&&data.content[0]&&data.content[0].text){
+      state.prediction=data.content[0].text;
+    } else {
+      state.error='The vision was unclear. Please try again. '+(data.error?.message||'');
+    }
+  } catch(e){
+    state.error='Sacred channel disrupted: '+e.message;
+  }
+  state.step=STEPS+2;
+  render();
+}
+
+function restart(){
+  state={step:0,data:{name:'',dob:'',tob:'',pob:'',gender:'',focus:'',lifePhase:'',lifePhaseOther:'',focusOther:''},chatHistory:[],chatBusy:false,prediction:'',error:''};
+  render();
+}
+
+function bindEvents(){
+  const pairs=[['f-name','name'],['f-dob','dob'],['f-tob','tob'],['f-pob','pob'],['f-phase-other','lifePhaseOther'],['f-focus-other','focusOther']];
+  pairs.forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input',()=>{
+      state.data[key]=el.value;
+      const btn=document.querySelector('.btn-primary');
+      if(btn) btn.disabled=!canProceed();
+    });
+  });
+  const ci=document.getElementById('chat-input');
+  if(ci){
+    ci.addEventListener('keydown',e=>{
+      if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}
+    });
+  }
+}
+
+render();
+</script>
+</body>
+</html>
